@@ -2,14 +2,18 @@ package com.marvelapi.MarvelAPI;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-@EnableFeignClients
 @SpringBootApplication
+@EnableFeignClients
 @EnableAsync
+@EnableCaching
 public class MarvelApiApplication {
 
 	public static void main(String[] args) {
@@ -22,8 +26,9 @@ public class MarvelApiApplication {
 		executor.setCorePoolSize(10);
 		executor.setMaxPoolSize(20);
 		executor.setQueueCapacity(500);
-		executor.setThreadNamePrefix("MyAsyncThread-");
+		executor.setThreadNamePrefix("GetAllCharactersAsync");
 		executor.initialize();
 		return executor;
 	}
+
 }

@@ -5,6 +5,9 @@ import com.marvelapi.MarvelAPI.client.MarvelClient;
 import com.marvelapi.MarvelAPI.response.MarvelApiCharacterResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -29,40 +32,6 @@ public class MarvelCharacterService {
     @Autowired
     private MarvelClient marvelClient;
 
-//    public List<Long> getCharacters(){
-//        String ts = String.valueOf(Instant.now().toEpochMilli());
-//
-//        String keys = ts + PRIVATE_API_KEY + PUBLIC_API_KEY;
-//
-//        String hash = DigestUtils.md5DigestAsHex(keys.getBytes());
-//
-//        MarvelApiCharacterResponse marvelApiCharacterResponse = marvelClient.getCharacters(ts,PUBLIC_API_KEY,hash,100,0);
-//        return marvelApiCharacterResponse.getData().getResults().stream().map(character -> character.getId()).toList();
-//    }
-//
-//    public List<Long> getAllCharacters() {
-//        int total = 0;
-//        int limit = 100;
-//        int offset = 0;
-//        List<Long> allCharacterIds = new ArrayList<>();
-//
-//        String ts = String.valueOf(Instant.now().toEpochMilli());
-//
-//        String keys = ts + PRIVATE_API_KEY + PUBLIC_API_KEY;
-//
-//        String hash = DigestUtils.md5DigestAsHex(keys.getBytes());
-//
-//        do {
-//            MarvelApiCharacterResponse marvelApiCharacterResponse = marvelClient.getCharacters(ts,PUBLIC_API_KEY,hash,limit,offset);
-//            allCharacterIds.addAll(marvelApiCharacterResponse.getData().getResults().stream().map(character -> character.getId()).toList());
-//
-//            offset += 100;
-//            total = marvelApiCharacterResponse.getData().getTotal();
-//        } while(offset < total);
-//
-//        return allCharacterIds;
-//    }
-
     @Async
     public CompletableFuture<List<Long>> getAllCharactersAsync() {
         int limit = 100;
@@ -86,6 +55,8 @@ public class MarvelCharacterService {
         return CompletableFuture.completedFuture(allCharacterIds);
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    @Cacheable("allCharacters")
     public List<Long> getAllCharacters() throws ExecutionException, InterruptedException {
         CompletableFuture<List<Long>> futureResult = getAllCharactersAsync();
         return futureResult.get();
