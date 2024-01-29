@@ -1,8 +1,10 @@
 package com.marvelapi.MarvelAPI.service;
 
 import com.marvelapi.MarvelAPI.client.MarvelClient;
+import com.marvelapi.MarvelAPI.exception.CharacterNotFoundException;
 import com.marvelapi.MarvelAPI.response.CharacterResponse;
 import com.marvelapi.MarvelAPI.response.MarvelApiCharacterResponse;
+import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -59,13 +61,20 @@ public class MarvelCharacterService {
         return futureResult.get();
     }
 
-    public Optional<CharacterResponse> getCharacterById(Long characterId) {
+    public CharacterResponse getCharacterById(Long characterId) {
         String ts = String.valueOf(Instant.now().toEpochMilli());
         String keys = ts + PRIVATE_API_KEY + PUBLIC_API_KEY;
         String hash = DigestUtils.md5DigestAsHex(keys.getBytes());
 
-        MarvelApiCharacterResponse marvelApiCharacterResponse = marvelClient.getCharacterById(characterId.toString(), 1, 0, ts, PUBLIC_API_KEY, hash);
-
-        return marvelApiCharacterResponse.getData().getResults().stream().filter(c -> c.getId() == characterId).findFirst();
+        try {
+            MarvelApiCharacterResponse marvelApiCharacterResponse = marvelClient.getCharacterById(characterId.toString(), 1, 0, ts, PUBLIC_API_KEY, hash);
+            Optional<CharacterResponse> optionalCharacterResponse = marvelApiCharacterResponse.getData().getResults().stream().filter(c -> c.getId() == characterId).findFirst();
+            return optionalCharacterResponse.orElseThrow();
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                throw new CharacterNotFoundException();
+            }
+            throw e;
+        }
     }
 }
