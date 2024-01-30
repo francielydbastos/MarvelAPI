@@ -55,7 +55,6 @@ public class MarvelCharacterServiceTest {
         // Wait for the asynchronous operation to complete
         List<Long> result = futureResult.get();
 
-        // Perform assertions based on the result
         assertEquals(expectedIds, result);
     }
 
