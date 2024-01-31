@@ -15,4 +15,12 @@ public class ExceptionService {
         return new ResponseEntity(uer, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(TranslatorException.class)
+    ResponseEntity<TranslatorException> handleException(TranslatorException err){
+        UserErrorResponse uer = new UserErrorResponse();
+        uer.setStatus(HttpStatus.BAD_REQUEST.value());
+        uer.setMessage(err.getMessage());
+        return new ResponseEntity(uer, HttpStatus.BAD_REQUEST);
+    }
+
 }

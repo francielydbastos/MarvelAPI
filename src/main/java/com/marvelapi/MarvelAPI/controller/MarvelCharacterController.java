@@ -2,13 +2,11 @@ package com.marvelapi.MarvelAPI.controller;
 
 import com.marvelapi.MarvelAPI.response.CharacterResponse;
 import com.marvelapi.MarvelAPI.service.MarvelCharacterService;
+import com.marvelapi.MarvelAPI.service.TranslatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -18,6 +16,8 @@ import java.util.concurrent.ExecutionException;
 public class MarvelCharacterController {
     @Autowired
     MarvelCharacterService marvelCharacterService;
+    @Autowired
+    TranslatorService translatorService;
 
     @GetMapping("")
     public ResponseEntity<List<Long>> getCharacters() throws ExecutionException, InterruptedException {
@@ -25,9 +25,20 @@ public class MarvelCharacterController {
         return ResponseEntity.status(HttpStatus.OK).body(characterIds);
     }
 
+//    @GetMapping("/{characterId}")
+//    public ResponseEntity<CharacterResponse> getCharacterById(@PathVariable Long characterId) {
+//        CharacterResponse character = marvelCharacterService.getCharacterById(characterId);
+//        return ResponseEntity.status(HttpStatus.OK).body(character);
+//    }
+
     @GetMapping("/{characterId}")
-    public ResponseEntity<CharacterResponse> getCharacterById(@PathVariable Long characterId) {
+    public ResponseEntity<CharacterResponse> getCharacterById(@PathVariable Long characterId, @RequestParam(name = "language", required = false, defaultValue = "") String language) {
         CharacterResponse character = marvelCharacterService.getCharacterById(characterId);
+        if(language != null && !language.isEmpty()) {
+            String translatedDescription = translatorService.translate(language, character.getDescription());
+
+            character.setDescription(translatedDescription);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(character);
     }
 
