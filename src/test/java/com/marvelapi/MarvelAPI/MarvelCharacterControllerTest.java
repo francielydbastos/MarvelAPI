@@ -2,9 +2,11 @@ package com.marvelapi.MarvelAPI;
 
 import com.marvelapi.MarvelAPI.controller.MarvelCharacterController;
 import com.marvelapi.MarvelAPI.exception.CharacterNotFoundException;
+import com.marvelapi.MarvelAPI.exception.TranslatorException;
 import com.marvelapi.MarvelAPI.response.CharacterResponse;
 import com.marvelapi.MarvelAPI.response.ThumbnailResponse;
 import com.marvelapi.MarvelAPI.service.MarvelCharacterService;
+import com.marvelapi.MarvelAPI.service.TranslatorService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +25,8 @@ import static org.mockito.Mockito.when;
 public class MarvelCharacterControllerTest {
     @MockBean
     MarvelCharacterService marvelCharacterService;
+    @MockBean
+    TranslatorService translatorService;
 
     @Autowired
     MockMvc mvc;
@@ -54,5 +58,28 @@ public class MarvelCharacterControllerTest {
 
         RequestBuilder request = get("/characters/1");
         mvc.perform(request).andExpect(status().isNotFound()).andReturn();
+    }
+
+    @Test
+    void testGetCharacterByIdWithCorrectIdAndCorrectTranslation() throws Exception {
+
+        CharacterResponse characterResponse = new CharacterResponse(1L, "Char Name", "A very cool character", new ThumbnailResponse("path", "jpg"));
+        String translatedDescription = "Un personaje muy genial";
+        when(marvelCharacterService.getCharacterById(1L)).thenReturn(characterResponse);
+        when(translatorService.translate("es", characterResponse.getDescription())).thenReturn(translatedDescription);
+
+        RequestBuilder request = get("/characters/1?targetLanguage=es");
+        mvc.perform(request).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    void testGetCharacterByIdWithCorrectIdAndIncorrectTranslation() throws Exception {
+
+        CharacterResponse characterResponse = new CharacterResponse(1L, "Char Name", "A very cool character", new ThumbnailResponse("path", "jpg"));
+        when(marvelCharacterService.getCharacterById(1L)).thenReturn(characterResponse);
+        when(translatorService.translate("esp", characterResponse.getDescription())).thenThrow(TranslatorException.class);
+
+        RequestBuilder request = get("/characters/1?language=esp");
+        mvc.perform(request).andExpect(status().isBadRequest()).andReturn();
     }
 }
